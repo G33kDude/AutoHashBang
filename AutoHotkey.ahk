@@ -27,12 +27,11 @@ if (FilePath == A_ScriptFullPath)
 }
 
 File := FileOpen(FilePath, "r").Read()
-if RegExMatch(File, "^\s*#!\s*(.+)", Match)
-{
-	ExePath := Trim(Match1)
-	;Run(ExePath, FilePath, )
-}
-MsgBox, % ExePath
+if RegExMatch(File, "^\s*`;#!\s*(.+)", Match)
+	AhkPath := Trim(Match1)
+else
+	AhkPath := A_AhkPath
+Run(AhkPath, Params*)
 
 RunAs(Params*)
 {
@@ -51,5 +50,5 @@ Run(Params*)
 		Param := RegExReplace(Param, "(\\*)""", "$1$1\""")
 		RunStr .= " """ Param """"
 	}
-	Run, %RunStr%
+	Run, % Trim(RunStr)
 }
