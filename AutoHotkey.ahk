@@ -28,7 +28,16 @@ if (FilePath == A_ScriptFullPath)
 
 File := FileOpen(FilePath, "r").Read()
 if RegExMatch(File, "^\s*`;#!\s*(.+)", Match)
+{
 	AhkPath := Trim(Match1)
+	Vars := {"%A_ScriptDir%": FilePath "\.."
+	, "%A_AppData%": A_AppData
+	, "%A_AppDataCommon%": A_AppDataCommon
+	, "%A_LineFile%": FilePath
+	, "%A_AhkPath%": A_AhkPath}
+	for SearchText, Replacement in Vars
+		StringReplace, AhkPath, AhkPath, %SearchText%, %Replacement%, All
+}
 else
 	AhkPath := A_AhkPath
 Run(AhkPath, Params*)
