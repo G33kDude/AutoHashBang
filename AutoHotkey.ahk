@@ -1,45 +1,61 @@
-﻿Params := []
+﻿#NoEnv
+SetBatchLines, -1
+#NoTrayIcon
+
+Params := []
 loop, %0%
 	Params[A_Index] := %A_Index%
 
 if !Params.MaxIndex()
 {
-	if !A_IsAdmin
-		RunAs(Params*)
-	MsgBox, 52, , Are you sure you want to install AutoHashBang?
+	Elevate(Params)
+	MsgBox, 52,, Are you sure you want to install AutoHashBang?
 	IfMsgBox, Yes
 		Install()
-	ExitApp
 }
-
-FilePath := Params[1]
-
-if (FilePath == A_ScriptFullPath)
+else if (Params[1] == A_ScriptFullPath)
 {
-	if !A_IsAdmin
-		RunAs(Params*)
-	MsgBox, 52, , Are you sure you want to uninstall AutoHashBang?
+	Elevate(Params)
+	MsgBox, 52,, Are you sure you want to uninstall AutoHashBang?
 	IfMsgBox, Yes
 		Uninstall()
-	ExitApp
-}
-
-File := FileOpen(FilePath, "r").Read()
-if RegExMatch(File, "^\s*`;#!\s*(.+)", Match)
-{
-	AhkPath := Trim(Match1)
-	Vars := {"%A_ScriptDir%": FilePath "\.."
-	, "%A_AppData%": A_AppData
-	, "%A_AppDataCommon%": A_AppDataCommon
-	, "%A_LineFile%": FilePath
-	, "%A_AhkPath%": A_AhkPath}
-	for SearchText, Replacement in Vars
-		StringReplace, AhkPath, AhkPath, %SearchText%, %Replacement%, All
 }
 else
-	AhkPath := A_AhkPath
-Run(AhkPath, Params*)
+{
+	AhkPath := DeHashBang(Params[1])
+	if (GetSubSystem(AhkPath) == 3) ; Console
+		RunWait, % MakeRun(AhkPath, Params*)
+	else
+		Run, % MakeRun(AhkPath, Params*)
+}
 ExitApp
+
+Elevate(Params)
+{
+	if !A_IsAdmin
+	{
+		Run, % "*RunAs " MakeRun(A_AhkPath, A_ScriptFullPath, Params*)
+		ExitApp
+	}
+}
+
+DeHashBang(FilePath)
+{
+	FileRead, Script, %FilePath%
+	if RegExMatch(Script, "`a)^\s*`;#!\s*(.+)", Match)
+	{
+		AhkPath := Trim(Match1)
+		Vars := {"%A_ScriptDir%": FilePath "\.."
+		, "%A_AppData%": A_AppData
+		, "%A_AppDataCommon%": A_AppDataCommon
+		, "%A_LineFile%": FilePath
+		, "%A_AhkPath%": A_AhkPath}
+		for SearchText, Replacement in Vars
+			StringReplace, AhkPath, AhkPath, %SearchText%, %Replacement%, All
+		return AhkPath
+	}
+	return A_AhkPath
+}
 
 Install()
 {
@@ -90,22 +106,22 @@ SetSubSystem(FilePath, SubSystem=0)
 	return SubSystem
 }
 
-RunAs(Params*)
+GetSubSystem(FilePath)
 {
-	Params.Verb := "*RunAs"
-	Run(A_AhkPath, A_ScriptFullPath, Params*)
-	ExitApp
+	exe := FileOpen(FilePath, "r")
+	if (exe.ReadUShort() != 0x5A4D)
+		throw Exception("Bad exe file: no DOS sig")
+	exe.Seek(60), offset := exe.ReadInt()
+	exe.Seek(offset)
+	if (exe.ReadUInt() != 0x4550)
+		throw Exception("Bad exe file: no NT sig")
+	exe.Seek(offset + 92)
+	return exe.ReadUShort()
 }
 
-Run(Params*)
+MakeRun(Params*)
 {
-	RunStr := Params.Verb
 	for Key, Param in Params
-	{
-		if (Key != A_Index)
-			Break
-		Param := RegExReplace(Param, "(\\*)""", "$1$1\""")
-		RunStr .= " """ Param """"
-	}
-	Run, % Trim(RunStr)
+		RunStr .= """" RegExReplace(Param, "(\\*)""", "$1$1\""") """ "
+	return RunStr
 }
