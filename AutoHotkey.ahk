@@ -87,6 +87,7 @@ Uninstall()
 	RegWrite, REG_SZ, HKCR, AutoHotkeyScript\Shell\Open\Command,, "%A_AhkPath%" "`%1" `%*
 }
 
+; Based on https://github.com/joedf/LibCon.ahk/blob/master/LibCon_Compiler/Ahk2CLI.ahk
 SetSubSystem(FilePath, SubSystem=0)
 {
 	exe := FileOpen(FilePath, "rw")
