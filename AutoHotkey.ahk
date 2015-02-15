@@ -46,6 +46,7 @@ DeHashBang(FilePath)
 	{
 		AhkPath := Trim(Match1)
 		Vars := {"%A_ScriptDir%": FilePath "\.."
+		, "%A_WorkingDir%": A_WorkingDir
 		, "%A_AppData%": A_AppData
 		, "%A_AppDataCommon%": A_AppDataCommon
 		, "%A_LineFile%": FilePath
