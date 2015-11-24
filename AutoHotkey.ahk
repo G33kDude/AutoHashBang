@@ -42,17 +42,21 @@ Elevate(Params)
 DeHashBang(FilePath)
 {
 	FileRead, Script, %FilePath%
-	if RegExMatch(Script, "`a)^\s*`;#!\s*(.+)", Match)
+	if RegExMatch(Script, "`a)^\s*`;\s*#!\s*(.+)", Match)
 	{
 		AhkPath := Trim(Match1)
-		Vars := {"%A_ScriptDir%": FilePath "\.."
-		, "%A_WorkingDir%": A_WorkingDir
-		, "%A_AppData%": A_AppData
-		, "%A_AppDataCommon%": A_AppDataCommon
-		, "%A_LineFile%": FilePath
-		, "%A_AhkPath%": A_AhkPath}
-		for SearchText, Replacement in Vars
-			StringReplace, AhkPath, AhkPath, %SearchText%, %Replacement%, All
+		if (!InStr(AhkPath, "\")){
+			AhkPath := A_AhkPath "\..\" AhkPath
+		} else {
+			Vars := {"%A_ScriptDir%": FilePath "\.."
+			, "%A_WorkingDir%": A_WorkingDir
+			, "%A_AppData%": A_AppData
+			, "%A_AppDataCommon%": A_AppDataCommon
+			, "%A_LineFile%": FilePath
+			, "%A_AhkPath%": A_AhkPath}
+			for SearchText, Replacement in Vars
+				StringReplace, AhkPath, AhkPath, %SearchText%, %Replacement%, All
+		}
 		return AhkPath
 	}
 	return A_AhkPath
